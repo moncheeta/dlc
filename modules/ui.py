@@ -913,38 +913,15 @@ def get_available_cameras():
             print(f"Error detecting cameras: {str(e)}")
             return [], ["No cameras found"]
     else:
-        # Unix-like systems (Linux/Mac) camera detection
-        camera_indices = []
-        camera_names = []
-
-        if platform.system() == "Darwin":  # macOS specific handling
-            # Try to open the default FaceTime camera first
-            cap = cv2.VideoCapture(0)
-            if cap.isOpened():
-                camera_indices.append(0)
-                camera_names.append("FaceTime Camera")
-                cap.release()
-
-            # On macOS, additional cameras typically use indices 1 and 2
-            for i in [1, 2]:
-                cap = cv2.VideoCapture(i)
-                if cap.isOpened():
-                    camera_indices.append(i)
-                    camera_names.append(f"Camera {i}")
-                    cap.release()
+        # Unix-like systems (Linux/Mac) - simplified camera detection
+        cap = cv2.VideoCapture(0)
+        if cap.isOpened():
+            print("Default camera (index 0) detected")
+            cap.release()
+            return [0], ["Default Camera (Index 0)"]
         else:
-            # Linux camera detection - test first 10 indices
-            for i in range(10):
-                cap = cv2.VideoCapture(i)
-                if cap.isOpened():
-                    camera_indices.append(i)
-                    camera_names.append(f"Camera {i}")
-                    cap.release()
-
-        if not camera_names:
+            print("No cameras found on this system")
             return [], ["No cameras found"]
-
-        return camera_indices, camera_names
 
 
 def create_webcam_preview(camera_index: int):

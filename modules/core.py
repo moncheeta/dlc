@@ -138,21 +138,26 @@ def suggest_execution_threads() -> int:
 
 def limit_resources() -> None:
     # prevent tensorflow memory leak
-    gpus = tensorflow.config.experimental.list_physical_devices('GPU')
-    for gpu in gpus:
-        tensorflow.config.experimental.set_memory_growth(gpu, True)
+    try:
+        gpus = tensorflow.config.experimental.list_physical_devices('GPU')
+        for gpu in gpus:
+            tensorflow.config.experimental.set_memory_growth(gpu, True)
+    except (AttributeError, RuntimeError):
+        # tensorflow not available or config not accessible
+        pass
     # limit memory usage
     if modules.globals.max_memory:
         memory = modules.globals.max_memory * 1024 ** 3
-        if platform.system().lower() == 'darwin':
-            memory = modules.globals.max_memory * 1024 ** 6
         if platform.system().lower() == 'windows':
             import ctypes
             kernel32 = ctypes.windll.kernel32
             kernel32.SetProcessWorkingSetSize(-1, ctypes.c_size_t(memory), ctypes.c_size_t(memory))
-        else:
+        elif platform.system().lower() != 'darwin':
             import resource
-            resource.setrlimit(resource.RLIMIT_DATA, (memory, memory))
+            try:
+                resource.setrlimit(resource.RLIMIT_DATA, (memory, memory))
+            except (ValueError, OverflowError):
+                pass
 
 
 def release_resources() -> None:
